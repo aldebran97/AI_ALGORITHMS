@@ -4,9 +4,18 @@ import com.aldebran.algo.Vector;
 import com.aldebran.algo.cnn.PictureClassification;
 import com.aldebran.algo.k_mean.KMean;
 import com.aldebran.algo.util.CIFAR10Converter;
+import org.nd4j.linalg.api.memory.MemoryWorkspace;
+import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
+import org.nd4j.linalg.api.memory.enums.AllocationPolicy;
+import org.nd4j.linalg.api.memory.enums.LearningPolicy;
+import org.nd4j.linalg.api.memory.enums.LocationPolicy;
+import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class Main {
@@ -14,16 +23,26 @@ public class Main {
     private static String datasetBaseDir = "/Users/aldebran/Downloads/dataset/";
 
     public static void main(String[] args) throws Exception {
+        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "30G");
+        System.setProperty("org.bytedeco.javacpp.maxbytes", "30G");
+        testCNNPictureClassification(); // 测试卷积神经网络图片分类
 
-        // 设置可用内存大小
-        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", 60 * 1024 * 1024 * 1024L + "");
-        System.setProperty("org.bytedeco.javacpp.maxbytes", 60 * 1024 * 1024 * 1024L + "");
+//        Path path = Paths.get("/Users/aldebran/Downloads/dataset/tmp_file");
+//        WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
+//                .initialSize(100 * 1024 * 1024 * 1024L)
+//                .policyLocation(LocationPolicy.MMAP)
+//                .tempFilePath(path.toAbsolutePath().toString())
+//                .build();
+//        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2")) {
+//            testCNNPictureClassification(); // 测试卷积神经网络图片分类
+//        }finally {
+//            Files.delete(path);
+//        }
 
 //        testKMean(); // 测试K-Mean
 
 //        testDatasetConvert(); // 测试CIFAR10 数据集转化
 
-        testCNNPictureClassification(); // 测试卷积神经网络图片分类
 
     }
 
@@ -49,15 +68,15 @@ public class Main {
 
     public static void testCNNPictureClassification() throws Exception {
         PictureClassification classification = new PictureClassification(
-                32, 32, 3,
+                32, 32, 3, 100, 1,
                 new File(datasetBaseDir + "cifar10/train"),
-                new File(datasetBaseDir + "cifar10/test"));
-        classification.setBatchSize(100);
-
+                new File(datasetBaseDir + "cifar10/test"),
+                new File(datasetBaseDir + "model"));
+        classification.setSaveInterval(10);
         classification.loadData();
         System.out.println("after loading data");
-//        classification.buildNetwork();
-        classification.buildVGG16();
+        classification.buildNetwork();
+        System.gc();
         System.out.println("after build network");
         classification.train(50);
         System.out.println("after train");

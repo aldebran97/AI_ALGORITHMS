@@ -12,6 +12,7 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <java.version>1.8</java.version>
+        <deeplearning4j.version>1.0.0-alpha</deeplearning4j.version>
     </properties>
 
     <dependencies>
@@ -30,31 +31,31 @@
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-core</artifactId>
-            <version>0.9.1</version>
+            <version>${deeplearning4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-nn</artifactId>
-            <version>0.9.1</version>
+            <version>${deeplearning4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native-platform</artifactId>
-            <version>0.9.1</version>
+            <version>${deeplearning4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-api</artifactId>
-            <version>0.9.1</version>
+            <version>${deeplearning4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.datavec</groupId>
             <artifactId>datavec-api</artifactId>
-            <version>0.9.1</version>
+            <version>${deeplearning4j.version}</version>
         </dependency>
 
     </dependencies>
