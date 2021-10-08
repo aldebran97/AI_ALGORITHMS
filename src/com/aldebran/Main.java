@@ -9,6 +9,7 @@ import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
 import org.nd4j.linalg.api.memory.enums.AllocationPolicy;
 import org.nd4j.linalg.api.memory.enums.LearningPolicy;
 import org.nd4j.linalg.api.memory.enums.LocationPolicy;
+import org.nd4j.linalg.api.memory.enums.SpillPolicy;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import java.util.Arrays;
 
 public class Main {
 
-    private static String datasetBaseDir = "C:/Users/hasee/Desktop/tmp/cifar10-dataset-all/";
+    private static String datasetBaseDir = "f:/dataset/";
 
     public static void main(String[] args) throws Exception {
 
@@ -53,34 +54,36 @@ public class Main {
     }
 
     public static void testCNNPictureClassification() throws Exception {
-        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "3G");
-        System.setProperty("org.bytedeco.javacpp.maxbytes", "3G");
-        Path path = Paths.get("c:/Users/hasee/Desktop/tmp/tmpFile");
-        Files.delete(path);
+        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "13G");
+        System.setProperty("org.bytedeco.javacpp.maxbytes", "13G");
+        Path path = Paths.get("f:/dataset/tmpFile");
+        System.out.println(path.toFile().getAbsolutePath());
+        System.out.println("alloc the disk file....");
         WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
                 .initialSize(40 * 1024 * 1024 * 1024L)
                 .policyLocation(LocationPolicy.MMAP)
+                .policyAllocation(AllocationPolicy.OVERALLOCATE)
+                .policySpill(SpillPolicy.EXTERNAL)
                 .tempFilePath(path.toAbsolutePath().toString())
                 .build();
-        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2")) {
-            PictureClassification classification = new PictureClassification(
-                    32, 32, 3, 100, 1,
-                    new File(datasetBaseDir + "cifar10/train"),
-                    new File(datasetBaseDir + "cifar10/test"),
-                    new File(datasetBaseDir + "model"));
-            classification.setSaveInterval(10);
-            classification.loadData();
-            System.out.println("after loading data");
-            classification.buildNetwork();
-            System.gc();
-            System.out.println("after build network");
-            classification.train(50);
-            System.out.println("after train");
-            System.out.println(classification.evaluate().stats(true));
-            System.out.println("after test");
-        } finally {
-            Files.delete(path);
-        }
+        MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2");
+        PictureClassification classification = new PictureClassification(
+                32, 32, 3, 100, 1,
+                new File(datasetBaseDir + "cifar10/train"),
+                new File(datasetBaseDir + "cifar10/test"),
+                new File(datasetBaseDir + "model"));
+        classification.setSaveInterval(10);
+        classification.loadData();
+        System.out.println("after loading data");
+        classification.buildNetwork();
+        System.gc();
+        System.out.println("after build network");
+        classification.train(50);
+        System.out.println("after train");
+        System.out.println(classification.evaluate().stats(true));
+        System.out.println("after test");
+        ws.close();
+//        ws.destroyWorkspace();
     }
 
 
