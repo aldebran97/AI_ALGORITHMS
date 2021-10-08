@@ -20,29 +20,15 @@ import java.util.Arrays;
 
 public class Main {
 
-    private static String datasetBaseDir = "/Users/aldebran/Downloads/dataset/";
+    private static String datasetBaseDir = "C:/Users/hasee/Desktop/tmp/cifar10-dataset-all/";
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "30G");
-        System.setProperty("org.bytedeco.javacpp.maxbytes", "30G");
-        testCNNPictureClassification(); // 测试卷积神经网络图片分类
 
-//        Path path = Paths.get("/Users/aldebran/Downloads/dataset/tmp_file");
-//        WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
-//                .initialSize(100 * 1024 * 1024 * 1024L)
-//                .policyLocation(LocationPolicy.MMAP)
-//                .tempFilePath(path.toAbsolutePath().toString())
-//                .build();
-//        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2")) {
-//            testCNNPictureClassification(); // 测试卷积神经网络图片分类
-//        }finally {
-//            Files.delete(path);
-//        }
+        testCNNPictureClassification(); // 测试卷积神经网络图片分类
 
 //        testKMean(); // 测试K-Mean
 
 //        testDatasetConvert(); // 测试CIFAR10 数据集转化
-
 
     }
 
@@ -67,21 +53,34 @@ public class Main {
     }
 
     public static void testCNNPictureClassification() throws Exception {
-        PictureClassification classification = new PictureClassification(
-                32, 32, 3, 100, 1,
-                new File(datasetBaseDir + "cifar10/train"),
-                new File(datasetBaseDir + "cifar10/test"),
-                new File(datasetBaseDir + "model"));
-        classification.setSaveInterval(10);
-        classification.loadData();
-        System.out.println("after loading data");
-        classification.buildNetwork();
-        System.gc();
-        System.out.println("after build network");
-        classification.train(50);
-        System.out.println("after train");
-        System.out.println(classification.evaluate().stats(true));
-        System.out.println("after test");
+        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "3G");
+        System.setProperty("org.bytedeco.javacpp.maxbytes", "3G");
+        Path path = Paths.get("c:/Users/hasee/Desktop/tmp/tmpFile");
+        Files.delete(path);
+        WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
+                .initialSize(40 * 1024 * 1024 * 1024L)
+                .policyLocation(LocationPolicy.MMAP)
+                .tempFilePath(path.toAbsolutePath().toString())
+                .build();
+        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2")) {
+            PictureClassification classification = new PictureClassification(
+                    32, 32, 3, 100, 1,
+                    new File(datasetBaseDir + "cifar10/train"),
+                    new File(datasetBaseDir + "cifar10/test"),
+                    new File(datasetBaseDir + "model"));
+            classification.setSaveInterval(10);
+            classification.loadData();
+            System.out.println("after loading data");
+            classification.buildNetwork();
+            System.gc();
+            System.out.println("after build network");
+            classification.train(50);
+            System.out.println("after train");
+            System.out.println(classification.evaluate().stats(true));
+            System.out.println("after test");
+        } finally {
+            Files.delete(path);
+        }
     }
 
 
