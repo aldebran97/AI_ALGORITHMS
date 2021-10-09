@@ -32,6 +32,7 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.learning.config.AdaDelta;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.*;
@@ -258,7 +259,7 @@ public class PictureClassification implements Serializable {
 
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder().seed(seed)
                 .l2(0.01)
-                .updater(Updater.ADAM)
+                .updater(new AdaDelta())
                 .weightInit(WeightInit.XAVIER)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list()
@@ -303,6 +304,7 @@ public class PictureClassification implements Serializable {
 
     // 训练
     public void train(int epochs) throws Exception {
+        System.out.println("nLabels: " + nLabels);
         for (int i = 0; i < epochs; i++) {
             System.out.println("epoch: " + (trainEpochs + 1));
             network.fit(trainDataSetIterator);

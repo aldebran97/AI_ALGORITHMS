@@ -11,9 +11,9 @@ import java.util.Arrays;
 
 public class Main {
 
-    private static String datasetBaseDir = "/Users/aldebran/Downloads/dataset/";
+    private static String datasetBaseDir = "/home/wenjiajun/dataset/";
 
-    private static String mMapFile = "/Users/aldebran/Downloads/dataset/tmpFile";
+    private static String mMapFile = "/home/wenjiajun/dataset/tmpFile";
 
     public static void main(String[] args) throws Exception {
 
@@ -46,7 +46,7 @@ public class Main {
         System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0");
 //        System.setProperty("org.bytedeco.javacpp.maxbytes", "0G");
         PictureClassification classification = new PictureClassification(
-                32, 32, 3, 5, 1,
+                32, 32, 3, 100, 1,
                 new File(datasetBaseDir + "cifar10/train"),
                 new File(datasetBaseDir + "cifar10/test"),
                 new File(datasetBaseDir + "model"));
