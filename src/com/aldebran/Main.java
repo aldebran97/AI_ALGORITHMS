@@ -4,24 +4,16 @@ import com.aldebran.algo.Vector;
 import com.aldebran.algo.cnn.PictureClassification;
 import com.aldebran.algo.k_mean.KMean;
 import com.aldebran.algo.util.CIFAR10Converter;
-import org.nd4j.linalg.api.memory.MemoryWorkspace;
-import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
-import org.nd4j.linalg.api.memory.enums.AllocationPolicy;
-import org.nd4j.linalg.api.memory.enums.LearningPolicy;
-import org.nd4j.linalg.api.memory.enums.LocationPolicy;
-import org.nd4j.linalg.api.memory.enums.SpillPolicy;
-import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class Main {
 
-    private static String datasetBaseDir = "f:/dataset/";
+    private static String datasetBaseDir = "/Users/aldebran/Downloads/dataset/";
+
+    private static String mMapFile = "/Users/aldebran/Downloads/dataset/tmpFile";
 
     public static void main(String[] args) throws Exception {
 
@@ -45,12 +37,9 @@ public class Main {
     public static void testDatasetConvert() throws IOException {
         CIFAR10Converter cifar10Converter = new CIFAR10Converter(
                 new File(datasetBaseDir + "cifar-10-batches-bin"),
-                new File(datasetBaseDir + "cifar10-dataset-all"), 1000
+                new File(datasetBaseDir + "cifar10"), 0.8, 1000
         );
         cifar10Converter.convert();
-        cifar10Converter.split(0.8,
-                new File(datasetBaseDir + "cifar10/train"),
-                new File(datasetBaseDir + "cifar10/test"));
     }
 
     public static void testCNNPictureClassification() throws Exception {
@@ -61,7 +50,7 @@ public class Main {
                 new File(datasetBaseDir + "cifar10/train"),
                 new File(datasetBaseDir + "cifar10/test"),
                 new File(datasetBaseDir + "model"));
-        classification.setMMapFile(new File("f:/dataset/tmpFile"), 10L * 1024 * 1024 * 1024);
+        classification.activateMMapFile(new File(mMapFile), 10L * 1024 * 1024 * 1024);
         classification.setSaveInterval(10);
         classification.loadData();
         System.out.println("after loading data");

@@ -100,6 +100,7 @@ public class PictureClassification implements Serializable {
     @Getter
     private int trainEpochs = 0;
 
+    // 内存映射文件
     @Getter
     private transient File mMapFile;
 
@@ -280,7 +281,14 @@ public class PictureClassification implements Serializable {
         network.init();
     }
 
-    public void setMMapFile(File f, long size) {
+    // 激活内存映射文件
+    public void activateMMapFile(File f, long size) {
+        if (size != f.length()) {
+            if (!f.delete()) {
+                throw new RuntimeException("fail to delete file: " + f.getAbsolutePath());
+            }
+        }
+        mMapFile = f;
         Path path = f.toPath();
         WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
                 .initialSize(size)
@@ -298,8 +306,6 @@ public class PictureClassification implements Serializable {
         for (int i = 0; i < epochs; i++) {
             System.out.println("epoch: " + (trainEpochs + 1));
             network.fit(trainDataSetIterator);
-            System.gc();
-            Thread.sleep(2 * 1000);
             trainDataSetIterator.reset();
             System.out.println(evaluate().stats(true));
             System.out.println();
@@ -307,7 +313,6 @@ public class PictureClassification implements Serializable {
                 save();
             }
             trainEpochs++;
-            System.gc();
         }
         if (ws != null) {
             ws.close();

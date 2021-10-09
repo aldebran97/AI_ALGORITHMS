@@ -1,2 +1,2 @@
--Xmx16G -Dorg.bytedeco.javacpp.maxbytes=30G -Dorg.bytedeco.javacpp.maxphysicalbytes=30G
+-Xmx512M -Dorg.bytedeco.javacpp.maxbytes=30G -Dorg.bytedeco.javacpp.maxphysicalbytes=30G
 注：堆外内存设置无效
