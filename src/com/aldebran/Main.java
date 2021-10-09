@@ -45,7 +45,7 @@ public class Main {
     public static void testDatasetConvert() throws IOException {
         CIFAR10Converter cifar10Converter = new CIFAR10Converter(
                 new File(datasetBaseDir + "cifar-10-batches-bin"),
-                new File(datasetBaseDir + "cifar10-dataset-all"), 6000
+                new File(datasetBaseDir + "cifar10-dataset-all"), 1000
         );
         cifar10Converter.convert();
         cifar10Converter.split(0.8,
@@ -54,24 +54,14 @@ public class Main {
     }
 
     public static void testCNNPictureClassification() throws Exception {
-        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "13G");
-        System.setProperty("org.bytedeco.javacpp.maxbytes", "13G");
-        Path path = Paths.get("f:/dataset/tmpFile");
-        System.out.println(path.toFile().getAbsolutePath());
-        System.out.println("alloc the disk file....");
-        WorkspaceConfiguration mmap = WorkspaceConfiguration.builder()
-                .initialSize(40 * 1024 * 1024 * 1024L)
-                .policyLocation(LocationPolicy.MMAP)
-                .policyAllocation(AllocationPolicy.OVERALLOCATE)
-                .policySpill(SpillPolicy.EXTERNAL)
-                .tempFilePath(path.toAbsolutePath().toString())
-                .build();
-        MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2");
+        System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0");
+//        System.setProperty("org.bytedeco.javacpp.maxbytes", "0G");
         PictureClassification classification = new PictureClassification(
-                32, 32, 3, 100, 1,
+                32, 32, 3, 5, 1,
                 new File(datasetBaseDir + "cifar10/train"),
                 new File(datasetBaseDir + "cifar10/test"),
                 new File(datasetBaseDir + "model"));
+        classification.setMMapFile(new File("f:/dataset/tmpFile"), 10L * 1024 * 1024 * 1024);
         classification.setSaveInterval(10);
         classification.loadData();
         System.out.println("after loading data");
@@ -82,8 +72,6 @@ public class Main {
         System.out.println("after train");
         System.out.println(classification.evaluate().stats(true));
         System.out.println("after test");
-        ws.close();
-//        ws.destroyWorkspace();
     }
 
 
