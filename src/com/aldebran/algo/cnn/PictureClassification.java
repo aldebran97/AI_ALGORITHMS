@@ -33,6 +33,8 @@ import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.AdaDelta;
+import org.nd4j.linalg.learning.config.Adam;
+import org.nd4j.linalg.learning.config.Nadam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.*;
@@ -208,16 +210,16 @@ public class PictureClassification implements Serializable {
     // 创建网络结构
     public void buildNetwork() {
 
-        Activation activation = Activation.RELU;
+        Activation activation = Activation.TANH;
         LossFunctions.LossFunction lossFunction = LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD;
 
         ConvolutionLayer cnn1 = new ConvolutionLayer.Builder(3, 3).nIn(channels).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+                .nOut(32).activation(activation).build();
 
-        ConvolutionLayer cnn1_2 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
+        ConvolutionLayer cnn1_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+                .nOut(32).activation(activation).build();
 
         SubsamplingLayer pool1 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
                 .stride(2, 2).build();
@@ -225,11 +227,11 @@ public class PictureClassification implements Serializable {
 
         ConvolutionLayer cnn2 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+                .nOut(64).activation(activation).build();
 
         ConvolutionLayer cnn2_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+                .nOut(64).activation(activation).build();
 
 
         SubsamplingLayer pool2 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
@@ -237,20 +239,26 @@ public class PictureClassification implements Serializable {
 
         ConvolutionLayer cnn3 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(256).activation(activation).build();
+                .nOut(128).activation(activation).build();
 
         ConvolutionLayer cnn3_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(256).activation(activation).build();
+                .nOut(128).activation(activation).build();
+
 
         SubsamplingLayer pool3 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
                 .stride(2, 2).build();
 
+
         DenseLayer denseLayer = new DenseLayer.Builder().activation(activation)
-                .nOut(85).build();
+                .nOut(512).build();
 
         DenseLayer denseLayer2 = new DenseLayer.Builder().activation(activation)
-                .nOut(42).build();
+                .nOut(256).build();
+
+        DenseLayer denseLayer3 = new DenseLayer.Builder().activation(activation)
+                .nOut(128).build();
+
 
         OutputLayer outputLayer = new OutputLayer.Builder(lossFunction)
                 .nOut(nLabels).activation(Activation.SOFTMAX).build();
@@ -258,13 +266,14 @@ public class PictureClassification implements Serializable {
         int i = 0;
 
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder().seed(seed)
-                .l2(0.01)
-                .updater(new AdaDelta())
+                .l1(0)
+                .l2(0)
+                .updater(new Adam(0.001))
                 .weightInit(WeightInit.XAVIER)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list()
                 .layer(i++, cnn1)
-                .layer(i++, cnn1_2)
+                .layer(i++, cnn1_1)
                 .layer(i++, pool1)
                 .layer(i++, cnn2)
                 .layer(i++, cnn2_1)
@@ -274,6 +283,7 @@ public class PictureClassification implements Serializable {
                 .layer(i++, pool3)
                 .layer(i++, denseLayer)
                 .layer(i++, denseLayer2)
+                .layer(i++, denseLayer3)
                 .layer(i++, outputLayer)
                 .setInputType(InputType.convolutional(h, w, channels))
                 .build();
@@ -284,10 +294,9 @@ public class PictureClassification implements Serializable {
 
     // 激活内存映射文件
     public void activateMMapFile(File f, long size) {
+        System.out.println("generate memory map file...");
         if (size != f.length()) {
-            if (!f.delete()) {
-                throw new RuntimeException("fail to delete file: " + f.getAbsolutePath());
-            }
+            f.delete();
         }
         mMapFile = f;
         Path path = f.toPath();
@@ -311,7 +320,7 @@ public class PictureClassification implements Serializable {
             trainDataSetIterator.reset();
             System.out.println(evaluate().stats(true));
             System.out.println();
-            if (trainEpochs != 0 && trainEpochs % saveInterval == 0) {
+            if (trainEpochs != 0 && trainEpochs % saveInterval == saveInterval - 1) {
                 save();
             }
             trainEpochs++;

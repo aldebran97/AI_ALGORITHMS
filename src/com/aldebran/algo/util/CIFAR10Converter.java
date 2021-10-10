@@ -7,9 +7,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
 /**
  * CIFAR-10数据集转换器
@@ -88,14 +87,20 @@ public class CIFAR10Converter {
             FileUtil.createDir(testLabelFolder);
         }
 
+        Set<Integer> trainFinished = new HashSet<>();
+
+        Set<Integer> testFinished = new HashSet<>();
+
         for (File sub : srcDir.listFiles()) {
             String subName = sub.getName();
-            if (subName.startsWith("data_batch") && subName.endsWith(".bin")) {
+            if (subName.contains("batch") && subName.endsWith(".bin")) {
                 InputStream inputStream = new BufferedInputStream(new FileInputStream(sub));
                 byte[] imageContent = new byte[1024 * 3 + 1];
                 int writeIndex = 0;
                 int pictureIndex = 0; // 图片索引
-                while (writeIndex < imageContent.length) {
+                while (writeIndex < imageContent.length
+                        && trainFinished.size() != indexLabelList.size()
+                        && testFinished.size() != indexLabelList.size()) {
                     int data = inputStream.read();
                     if (data == -1) {
                         break;
@@ -113,6 +118,8 @@ public class CIFAR10Converter {
                                 OutputStream fileOut = new BufferedOutputStream(new FileOutputStream(outFile));
                                 ImageIO.write(getBufferedImage(imageContent), "jpeg", fileOut);
                                 fileOut.close();
+                            } else {
+                                trainFinished.add((int) imageContent[0]);
                             }
                         } else {
                             if (testLabelFolder.listFiles().length < testNum) {
@@ -121,6 +128,8 @@ public class CIFAR10Converter {
                                 OutputStream fileOut = new BufferedOutputStream(new FileOutputStream(outFile));
                                 ImageIO.write(getBufferedImage(imageContent), "jpeg", fileOut);
                                 fileOut.close();
+                            } else {
+                                testFinished.add((int) imageContent[0]);
                             }
                         }
                         // 重用
