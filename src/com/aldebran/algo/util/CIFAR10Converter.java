@@ -80,13 +80,14 @@ public class CIFAR10Converter {
         readLabels(); // 读取标签名
         int trainNum = (int) (trainRate * numEachClass);
         int testNum = numEachClass - trainNum;
+        System.out.printf("train max num: %s, test max num: %s%n", trainNum, testNum);
         for (String label : indexLabelList) {
             File trainLabelFolder = new File(trainDir, label);
             FileUtil.createDir(trainLabelFolder);
             File testLabelFolder = new File(testDir, label);
             FileUtil.createDir(testLabelFolder);
         }
-
+        System.out.printf("labels: %s%n", getLabels());
         Set<Integer> trainFinished = new HashSet<>();
 
         Set<Integer> testFinished = new HashSet<>();
@@ -94,6 +95,7 @@ public class CIFAR10Converter {
         for (File sub : srcDir.listFiles()) {
             String subName = sub.getName();
             if (subName.contains("batch") && subName.endsWith(".bin")) {
+                System.out.printf("deal with: %s%n", subName);
                 InputStream inputStream = new BufferedInputStream(new FileInputStream(sub));
                 byte[] imageContent = new byte[1024 * 3 + 1];
                 int writeIndex = 0;

@@ -6,7 +6,7 @@ import com.aldebran.algo.k_mean.KMean;
 import java.util.Arrays;
 import java.util.List;
 
-public class TryKMeans {
+public class TryKMean {
 
     // 点集
     static List<Vector> points = Arrays.asList(

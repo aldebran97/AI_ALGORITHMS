@@ -16,10 +16,8 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.inputs.InputType;
-import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
+import org.deeplearning4j.nn.conf.layers.*;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
@@ -210,16 +208,16 @@ public class PictureClassification implements Serializable {
     // 创建网络结构
     public void buildNetwork() {
 
-        Activation activation = Activation.TANH;
+        Activation activation = Activation.RELU;
         LossFunctions.LossFunction lossFunction = LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD;
 
         ConvolutionLayer cnn1 = new ConvolutionLayer.Builder(3, 3).nIn(channels).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(32).activation(activation).build();
+                .nOut(64).activation(activation).build();
 
         ConvolutionLayer cnn1_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(32).activation(activation).build();
+                .nOut(64).activation(activation).build();
 
         SubsamplingLayer pool1 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
                 .stride(2, 2).build();
@@ -227,11 +225,11 @@ public class PictureClassification implements Serializable {
 
         ConvolutionLayer cnn2 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+                .nOut(128).activation(activation).build();
 
         ConvolutionLayer cnn2_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+                .nOut(128).activation(activation).build();
 
 
         SubsamplingLayer pool2 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
@@ -239,25 +237,32 @@ public class PictureClassification implements Serializable {
 
         ConvolutionLayer cnn3 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+                .nOut(256).activation(activation).build();
 
         ConvolutionLayer cnn3_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+                .nOut(256).activation(activation).build();
 
 
         SubsamplingLayer pool3 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
                 .stride(2, 2).build();
 
 
-        DenseLayer denseLayer = new DenseLayer.Builder().activation(activation)
+        LSTM lstm = new LSTM.Builder().activation(activation)
                 .nOut(512).build();
 
-        DenseLayer denseLayer2 = new DenseLayer.Builder().activation(activation)
-                .nOut(256).build();
+        LSTM lstm2 = new LSTM.Builder().activation(activation)
+                .nOut(512).build();
 
-        DenseLayer denseLayer3 = new DenseLayer.Builder().activation(activation)
-                .nOut(128).build();
+
+//        DenseLayer denseLayer = new DenseLayer.Builder().activation(activation)
+//                .nOut(512).build();
+//
+//        DenseLayer denseLayer2 = new DenseLayer.Builder().activation(activation)
+//                .nOut(256).build();
+//
+//        DenseLayer denseLayer3 = new DenseLayer.Builder().activation(activation)
+//                .nOut(128).build();
 
 
         OutputLayer outputLayer = new OutputLayer.Builder(lossFunction)
@@ -281,9 +286,8 @@ public class PictureClassification implements Serializable {
                 .layer(i++, cnn3)
                 .layer(i++, cnn3_1)
                 .layer(i++, pool3)
-                .layer(i++, denseLayer)
-                .layer(i++, denseLayer2)
-                .layer(i++, denseLayer3)
+                .layer(i++, lstm)
+                .layer(i++, lstm2)
                 .layer(i++, outputLayer)
                 .setInputType(InputType.convolutional(h, w, channels))
                 .build();

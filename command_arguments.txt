@@ -1,2 +1,0 @@
--Xmx128M -Dorg.bytedeco.javacpp.maxbytes=40G -Dorg.bytedeco.javacpp.maxphysicalbytes=40G
-注：堆外内存maxphysicalbytes设置无效

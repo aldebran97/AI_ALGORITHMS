@@ -5,13 +5,13 @@ import com.aldebran.algo.util.CIFAR10Converter;
 import java.io.File;
 import java.io.IOException;
 
-public class Cifar10PictureConvert {
+public class TryCifar10PictureConvert {
 
-    static String originDir = "f:/dataset/cifar-10-batches-bin";
+    static String originDir = "/Users/aldebran/Downloads/dataset/cifar-10-batches-bin";
 
-    static String destDir = "f:/dataset/cifar10";
+    static String destDir = "/Users/aldebran/Downloads/dataset/cifar10";
 
-    static int numEachClass = 10000;
+    static int numEachClass = 100000;
 
     static double trainRate = 0.8;
 

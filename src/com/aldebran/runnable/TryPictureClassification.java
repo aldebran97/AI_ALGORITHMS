@@ -7,17 +7,18 @@ import java.io.IOException;
 
 public class TryPictureClassification {
 
-    static String trainDir = "f:/dataset/cifar10/train";
+    static String trainDir = "/Users/aldebran/Downloads/dataset/cifar10/train";
 
-    static String testDir = "f:/dataset/cifar10/test";
+    static String testDir = "/Users/aldebran/Downloads/dataset/cifar10/test";
 
-    static String modelDir = "f:/dataset/model";
+    static String modelDir = "/Users/aldebran/Downloads/dataset/model";
 
-    static String mMapFile = "f:/dataset/tmpFile";
+    static String mMapFile = "/Users/aldebran/Downloads/dataset/tmpFile";
 
 
     public static void main(String[] args) throws Exception {
         System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0");
+        System.setProperty("javacpp.platform", "linux-arm64");
 //        System.setProperty("org.bytedeco.javacpp.maxbytes", "0");
         PictureClassification classification = new PictureClassification(
                 32, 32, 3, 100, 1,
