@@ -1,7 +1,6 @@
 package com.aldebran.algo.cnn;
 
 import com.aldebran.algo.util.FileUtil;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
@@ -40,7 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 
-public class PictureClassification implements Serializable {
+public class    PictureClassification implements Serializable {
 
     // 图片宽度，构造指定后不可再修改
     @Getter
