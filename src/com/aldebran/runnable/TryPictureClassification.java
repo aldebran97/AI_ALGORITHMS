@@ -20,6 +20,18 @@ public class TryPictureClassification {
         System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0");
         System.setProperty("javacpp.platform", "linux-arm64");
 //        System.setProperty("org.bytedeco.javacpp.maxbytes", "0");
+        PictureClassification classification = first();
+
+        classification.train(100);
+
+        System.out.println(classification.evaluate().stats(true));
+
+        classification.deActiveMMapFile();
+
+    }
+
+    // 首次训练
+    public static PictureClassification first() throws IOException {
         PictureClassification classification = new PictureClassification(
                 32, 32, 3, 100, 1,
                 new File(trainDir),
@@ -28,12 +40,18 @@ public class TryPictureClassification {
         classification.activateMMapFile(new File(mMapFile), 40L * 1024 * 1024 * 1024);
         classification.setSaveInterval(10);
         classification.loadData();
-        System.out.println("after loading data");
         classification.buildNetwork();
-        System.out.println("after build network");
-        classification.train(100);
-        System.out.println("after train");
-        System.out.println(classification.evaluate().stats(true));
-        System.out.println("after test");
+        return classification;
     }
+
+
+    // 加载已经训练好的模型
+    public static PictureClassification loadFromFile() throws IOException, ClassNotFoundException {
+        PictureClassification classification =
+                PictureClassification.loadConfigAndModel(new File(modelDir), 99);
+        classification.activateMMapFile(new File(mMapFile), 40L * 1024 * 1024 * 1024);
+        classification.loadData();
+        return classification;
+    }
+
 }

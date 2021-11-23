@@ -3,6 +3,11 @@ package com.aldebran.algo;
 import java.util.Arrays;
 import java.util.Iterator;
 
+/**
+ * 向量
+ *
+ * @author aldebran
+ */
 public class Vector extends Matrix2D {
 
     public Vector(int n) {

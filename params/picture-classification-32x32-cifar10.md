@@ -1,10 +1,10 @@
-### 1. 情况
+### 情况
 训练集大小 39497 测试集大小 11358 <br>
 分类数10 像素32x32 <br>
 芯片apple m1 <br>
 系统 macos big sur 11.6
 
-### 2. 第7周期结果:
+### 7周期结果
 
 ```text
 epoch: 7
@@ -35,8 +35,9 @@ Precision, recall & F1: macro-averaged (equally weighted avg. of 10 classes)
 
 Confusion matrix format: Actual (rowClass) predicted as (columnClass) N times
 ==================================================================```
+```
 
-### 3. 网络结构
+### 网络结构
 
 ```java
     public void buildNetwork() {
@@ -129,6 +130,12 @@ Confusion matrix format: Actual (rowClass) predicted as (columnClass) N times
         network.init();
     }
 ```
-### 4. 其他
+### 初始化
 
-batch_size=100
+```java
+ PictureClassification classification = new PictureClassification(
+                32, 32, 3, 100, 1,
+                new File(trainDir),
+                new File(testDir),
+                new File(modelDir));
+```

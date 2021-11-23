@@ -1,5 +1,10 @@
 package com.aldebran.algo;
 
+/**
+ * 二维矩阵
+ *
+ * @author aldebran
+ */
 public class Matrix2D {
 
     double[][] array;

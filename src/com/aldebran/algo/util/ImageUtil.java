@@ -4,6 +4,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Stack;
 
 /**
  * 图片工具类
@@ -39,10 +40,44 @@ public class ImageUtil {
 
     // 文件级
     public static void resize(File in, int w, int h, File out) throws IOException {
+        File p = out.getParentFile();
+        if (!p.exists() && !p.mkdirs()) {
+            throw new IOException("fail to create dir: " + p.getAbsolutePath());
+        }
         String outName = out.getName();
         String extension = outName.substring(outName.lastIndexOf(".") + 1);
         resize(new BufferedInputStream(new FileInputStream(in)),
                 w, h, new BufferedOutputStream(new FileOutputStream(out)), extension);
+    }
+
+    // 求图片的平均dimension
+    public static double[] averageSize(File folder) throws IOException {
+        Stack<File> stack = new Stack<>();
+        stack.push(folder);
+        int count = 0;
+        long w = 0;
+        long h = 0;
+        while (!stack.empty()) {
+            File file = stack.pop();
+            if (file.getName().startsWith(".")) {
+                continue;
+            }
+            if (file.isFile()) {
+//                System.out.println(file);
+                BufferedImage bufferedImage = ImageIO.read(file);
+                if (bufferedImage == null) {
+                    continue;
+                }
+                w += bufferedImage.getWidth();
+                h += bufferedImage.getHeight();
+                count++;
+            } else {
+                for (File sub : file.listFiles()) {
+                    stack.push(sub);
+                }
+            }
+        }
+        return new double[]{w * 1.0 / count, h * 1.0 / count};
     }
 
 

@@ -10,13 +10,9 @@ import org.datavec.image.recordreader.ImageRecordReader;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.ConvolutionMode;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.*;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
-import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
@@ -25,21 +21,26 @@ import org.nd4j.linalg.api.memory.MemoryWorkspace;
 import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
 import org.nd4j.linalg.api.memory.enums.LearningPolicy;
 import org.nd4j.linalg.api.memory.enums.LocationPolicy;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.config.AdaDelta;
 import org.nd4j.linalg.learning.config.Adam;
-import org.nd4j.linalg.learning.config.Nadam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Random;
+import java.util.*;
 
-public class    PictureClassification implements Serializable {
+/**
+ * CNN图片分类
+ *
+ * @author aldebran
+ */
+public class PictureClassification implements Serializable {
 
     // 图片宽度，构造指定后不可再修改
     @Getter
@@ -61,7 +62,7 @@ public class    PictureClassification implements Serializable {
     @Getter
     private final int batchSize;
 
-    public static int DEFAULT_BATCH_SIZE = 100;
+    public static int DEFAULT_BATCH_SIZE = 50;
 
     // 随机相关，构造指定后不可再修改
     private final int seed;
@@ -98,13 +99,15 @@ public class    PictureClassification implements Serializable {
 
     // 已训练的周期数
     @Getter
-    private int trainEpochs = 0;
+    private int trainEpoch = 0;
 
     // 内存映射文件
     @Getter
     private transient File mMapFile;
 
     private transient MemoryWorkspace ws;
+
+    private List<String> labels;
 
     public PictureClassification(int w, int h, int channels, int batchSize, int seed,
                                  File trainDir, File testDir, File modelDir) throws IOException {
@@ -183,6 +186,11 @@ public class    PictureClassification implements Serializable {
         DataNormalization dataNormalizationTrain = new ImagePreProcessingScaler();
         dataNormalizationTrain.fit(trainDataSetIterator);
         trainDataSetIterator.setPreProcessor(dataNormalizationTrain);
+
+        if (labels == null) {
+            labels = trainDataSetIterator.getLabels();
+        }
+
         // test
         FileSplit fileSplitTest = new FileSplit(testDir, NativeImageLoader.ALLOWED_FORMATS, random);
         ImageRecordReader imageRecordReaderTest = new ImageRecordReader(h, w, channels, labelGenerator);
@@ -193,6 +201,9 @@ public class    PictureClassification implements Serializable {
         dataNormalizationTest.fit(testDataSetIterator);
         testDataSetIterator.setPreProcessor(dataNormalizationTest);
 
+        if (!labels.equals(testDataSetIterator.getLabels())) {
+            throw new RuntimeException("error labels");
+        }
 //        int c = 0;
 //        while (testDataSetIterator.hasNext()) {
 //            DataSet dataSet = testDataSetIterator.next();
@@ -212,11 +223,11 @@ public class    PictureClassification implements Serializable {
 
         ConvolutionLayer cnn1 = new ConvolutionLayer.Builder(3, 3).nIn(channels).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+                .nOut(32).activation(activation).build();
 
-        ConvolutionLayer cnn1_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
-                .convolutionMode(ConvolutionMode.Same)
-                .nOut(64).activation(activation).build();
+//        ConvolutionLayer cnn1_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
+//                .convolutionMode(ConvolutionMode.Same)
+//                .nOut(32).activation(activation).build();
 
         SubsamplingLayer pool1 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
                 .stride(2, 2).build();
@@ -224,11 +235,11 @@ public class    PictureClassification implements Serializable {
 
         ConvolutionLayer cnn2 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+                .nOut(64).activation(activation).build();
 
-        ConvolutionLayer cnn2_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
-                .convolutionMode(ConvolutionMode.Same)
-                .nOut(128).activation(activation).build();
+//        ConvolutionLayer cnn2_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
+//                .convolutionMode(ConvolutionMode.Same)
+//                .nOut(64).activation(activation).build();
 
 
         SubsamplingLayer pool2 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
@@ -236,11 +247,11 @@ public class    PictureClassification implements Serializable {
 
         ConvolutionLayer cnn3 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(256).activation(activation).build();
+                .nOut(128).activation(activation).build();
 
         ConvolutionLayer cnn3_1 = new ConvolutionLayer.Builder(3, 3).stride(1, 1)
                 .convolutionMode(ConvolutionMode.Same)
-                .nOut(256).activation(activation).build();
+                .nOut(128).activation(activation).build();
 
 
         SubsamplingLayer pool3 = new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX).kernelSize(2, 2)
@@ -249,7 +260,7 @@ public class    PictureClassification implements Serializable {
 
         LSTM lstm = new LSTM.Builder().activation(activation)
                 .nOut(512).build();
-
+//
         LSTM lstm2 = new LSTM.Builder().activation(activation)
                 .nOut(512).build();
 
@@ -277,19 +288,23 @@ public class    PictureClassification implements Serializable {
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list()
                 .layer(i++, cnn1)
-                .layer(i++, cnn1_1)
+//                .layer(i++, cnn1_1)
                 .layer(i++, pool1)
                 .layer(i++, cnn2)
-                .layer(i++, cnn2_1)
+//                .layer(i++, cnn2_1)
                 .layer(i++, pool2)
                 .layer(i++, cnn3)
                 .layer(i++, cnn3_1)
                 .layer(i++, pool3)
                 .layer(i++, lstm)
                 .layer(i++, lstm2)
+//                .layer(i++, denseLayer)
                 .layer(i++, outputLayer)
                 .setInputType(InputType.convolutional(h, w, channels))
                 .build();
+        configuration.setTrainingWorkspaceMode(WorkspaceMode.ENABLED);
+        configuration.setInferenceWorkspaceMode(WorkspaceMode.NONE);
+
 
         network = new MultiLayerNetwork(configuration);
         network.init();
@@ -310,27 +325,33 @@ public class    PictureClassification implements Serializable {
                 .tempFilePath(path.toAbsolutePath().toString())
                 .build();
 
-        ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2").notifyScopeEntered();
+        ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(mmap, "M2").notifyScopeLeft();
     }
 
+    // 关闭工作区
+    public void deActiveMMapFile() {
+        if (ws != null) {
+            ws.notifyScopeLeft();
+            ws.close();
+            ws.destroyWorkspace();
+            ws = null;
+        }
+    }
 
     // 训练
     public void train(int epochs) throws Exception {
         System.out.println("nLabels: " + nLabels);
         for (int i = 0; i < epochs; i++) {
-            System.out.println("epoch: " + (trainEpochs + 1));
+            System.out.println("epoch: " + (trainEpoch + 1));
             network.fit(trainDataSetIterator);
             trainDataSetIterator.reset();
             System.out.println(evaluate().stats(true));
+//            System.out.println("memory: " + network.memoryInfo(batchSize, InputType.convolutional(h, w, channels)));
             System.out.println();
-            if (trainEpochs != 0 && trainEpochs % saveInterval == saveInterval - 1) {
+            if (trainEpoch != 0 && trainEpoch % saveInterval == saveInterval - 1) {
                 save();
             }
-            trainEpochs++;
-        }
-        if (ws != null) {
-            ws.close();
-            ws = null;
+            trainEpoch++;
         }
     }
 
@@ -340,6 +361,61 @@ public class    PictureClassification implements Serializable {
         testDataSetIterator.reset();
         return evaluation;
     }
+
+    // 预测方法
+    public String predict(InputStream inputStream) throws IOException {
+
+        try {
+            deActiveMMapFile();
+            BufferedImage bufferedImage = ImageIO.read(inputStream);
+            NativeImageLoader loader = new NativeImageLoader(h, w, channels);
+            INDArray input = loader.asMatrix(bufferedImage);
+            DataNormalization scalar = new ImagePreProcessingScaler(0, 1);
+            scalar.transform(input);
+            int[] result = network.predict(input);
+//            System.out.println(Arrays.toString(result));
+//            System.out.println(network.output(input));
+            return labels.get(result[0]);
+        } finally {
+            inputStream.close();
+        }
+    }
+
+    public String predict(File file) throws IOException {
+        return predict(new BufferedInputStream(new FileInputStream(file)));
+    }
+
+    public List<String> predict(Iterator<InputStream> inputStreams) throws IOException {
+        List<String> result = new ArrayList<>();
+        while (inputStreams.hasNext()) {
+            result.add(predict(inputStreams.next()));
+        }
+        return result;
+    }
+
+    public List<String> predictFiles(List<File> files) throws IOException {
+        Iterator<InputStream> inputStreams = new Iterator<InputStream>() {
+
+            private int i = 0;
+
+            @Override
+            public boolean hasNext() {
+                return i < files.size();
+            }
+
+            @Override
+            public InputStream next() {
+                File f = files.get(i++);
+                try {
+                    return new BufferedInputStream(new FileInputStream(f));
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+        return predict(inputStreams);
+    }
+
 
     /**
      * 保存模型和配置
@@ -351,7 +427,7 @@ public class    PictureClassification implements Serializable {
             return;
         }
         // 保存模型
-        File modelFile = new File(modelDir, "" + trainEpochs);
+        File modelFile = new File(modelDir, "" + trainEpoch);
         FileUtil.createFile(modelFile);
         ModelSerializer.writeModel(network, modelFile, true);
         // 保存基本数据
@@ -362,23 +438,25 @@ public class    PictureClassification implements Serializable {
         objectOutputStream.close();
     }
 
-
     /**
      * 加载配置和模型
      *
-     * @param modelDir 目录
+     * @param modelDir   目录
+     * @param trainEpoch 训练周期数，索引从0开始
      * @return
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public static PictureClassification loadConfigAndModel(File modelDir) throws IOException, ClassNotFoundException {
+    public static PictureClassification loadConfigAndModel(File modelDir, int trainEpoch) throws IOException, ClassNotFoundException {
         File descFile = new File(modelDir, "desc");
         ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(descFile));
         PictureClassification pictureClassification = (PictureClassification) objectInputStream.readObject();
         pictureClassification.network = ModelSerializer.
                 restoreMultiLayerNetwork(
-                        new File(modelDir, "" + pictureClassification.trainEpochs));
+                        new File(modelDir, "" + trainEpoch));
         pictureClassification.setModelDir(modelDir);
         return pictureClassification;
     }
+
+
 }
