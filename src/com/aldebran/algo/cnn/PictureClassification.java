@@ -1,6 +1,7 @@
 package com.aldebran.algo.cnn;
 
 import com.aldebran.algo.util.FileUtil;
+import com.aldebran.algo.util.ImageUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
@@ -39,6 +40,7 @@ import java.util.*;
  * CNN图片分类
  *
  * @author aldebran
+ * @since 2021-09-27
  */
 public class PictureClassification implements Serializable {
 
@@ -368,8 +370,12 @@ public class PictureClassification implements Serializable {
         try {
             deActiveMMapFile();
             BufferedImage bufferedImage = ImageIO.read(inputStream);
+            if (bufferedImage.getWidth() != w || bufferedImage.getHeight() != h) {
+                bufferedImage = ImageUtil.resize(bufferedImage, w, h);
+            }
             NativeImageLoader loader = new NativeImageLoader(h, w, channels);
             INDArray input = loader.asMatrix(bufferedImage);
+//            System.out.println(Arrays.toString(input.shape()));
             DataNormalization scalar = new ImagePreProcessingScaler(0, 1);
             scalar.transform(input);
             int[] result = network.predict(input);
